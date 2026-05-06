@@ -10,23 +10,38 @@ TARGET_NOTEBOOKS = ROOT / "notebooks"
 
 
 REPLACEMENTS = {
-    "airline": "retail",
-    "Airline": "Retail",
+    # Keep function and variable replacements first for consistency.
+    "book_flight": "create_order",
+    "search_flights": "search_products",
+    "get_booking": "get_order",
+    "cancel_booking": "cancel_order",
+    "FLIGHTS": "PRODUCTS",
+    "flight_id": "product_id",
+    "booking_id": "order_id",
+    "passenger_profile": "customer_profile",
+    "update_passenger_profile": "update_customer_profile",
+    # Domain text replacements.
     "flight booking assistant": "retail support assistant",
     "flight booking": "order workflow",
+    "airline": "retail",
+    "Airline": "Retail",
     "flights": "products",
     "Flights": "Products",
     "flight": "product",
     "Flight": "Product",
     "booking": "order",
     "Booking": "Order",
-    "book_flight": "create_order",
-    "search_flights": "search_products",
-    "get_booking": "get_order",
-    "cancel_booking": "cancel_order",
     "passenger": "customer",
     "Passenger": "Customer",
     "baggage": "delivery",
+}
+
+
+OUTPUT_NAME_MAP = {
+    "Agents Week 2026 _ Лекция 1.1 Intro to AI Agents LLM(часть 1).ipynb": "01_llm_basics.ipynb",
+    "Agents Week 2026 _ Лекция 1.1 Intro to AI Agents LLM (часть 2).ipynb": "02_first_agent_intro.ipynb",
+    "Agents Week 2026 _ Лекция 1.2 Tools. MCP.ipynb": "03_tools_and_mcp.ipynb",
+    "Agents Week 2026 _ Семинар 2 Memory and Guardrails in LLM-Powered Agents.ipynb": "04_memory_rag_guardrails.ipynb",
 }
 
 
@@ -158,11 +173,16 @@ def migrate_notebook(src: Path, dst: Path) -> None:
                     '# Prefer retail domain; fallback keeps notebook runnable.\n'
                     'DOMAIN_DIR = Path("data/tau2/domains/retail")\n'
                     'if not DOMAIN_DIR.exists():\n'
-                    '    DOMAIN_DIR = Path("data/tau2/domains/airline")'
+                    '    DOMAIN_DIR = Path("data/tau2/domains/retail")'
                 ),
             )
 
         cell["source"] = source.splitlines(keepends=True)
+
+        # Keep notebooks clean and git-stable: strip runtime artifacts.
+        if cell.get("cell_type") == "code":
+            cell["outputs"] = []
+            cell["execution_count"] = None
 
     dst.parent.mkdir(parents=True, exist_ok=True)
     dst.write_text(json.dumps(data, ensure_ascii=False, indent=1), encoding="utf-8")
@@ -175,8 +195,8 @@ def main() -> None:
         raise RuntimeError(f"No notebooks found in {SOURCE_INPUT}")
 
     for nb in notebooks:
-        rel = nb.relative_to(SOURCE_INPUT)
-        out_path = TARGET_NOTEBOOKS / rel.name
+        out_name = OUTPUT_NAME_MAP.get(nb.name, nb.name)
+        out_path = TARGET_NOTEBOOKS / out_name
         migrate_notebook(nb, out_path)
         print(f"Migrated: {nb.name} -> {out_path}")
 

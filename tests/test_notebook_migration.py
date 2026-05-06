@@ -18,9 +18,8 @@ def test_no_airline_system_prompt_phrase():
 
 
 def test_retail_policy_corpus_present():
-    seminar = next(
-        nb for nb in NB_DIR.glob("*.ipynb") if "Memory and Guardrails" in nb.name
-    )
+    seminar = NB_DIR / "04_memory_rag_guardrails.ipynb"
+    assert seminar.exists()
     text = seminar.read_text(encoding="utf-8")
     assert "Retail policy handbook" in text
     assert "Return Window" in text
